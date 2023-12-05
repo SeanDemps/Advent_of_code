@@ -23,11 +23,12 @@ impl RangeMatch for Regex {
 }
 
 trait GetMatches {
+    fn get_matches_with_range(&self, match_list: &Vec<Matcher>) -> Vec<&Matcher>;
     fn get_matches(&self, match_list: &Vec<Matcher>) -> Vec<&String>;
 }
 
 impl GetMatches for Vec<Matcher> {
-    fn get_matches(&self, match_list: &Vec<Matcher>) -> Vec<&String> {
+    fn get_matches_with_range(&self, match_list: &Vec<Matcher>) -> Vec<&Matcher> {
         return self
             .iter()
             .filter(|(number_range, _)| {
@@ -37,8 +38,13 @@ impl GetMatches for Vec<Matcher> {
 
                 return overlap.is_some();
             })
-            .map(|(_, string)| string)
             .collect();
+    }
+
+    fn get_matches(&self, match_list: &Vec<Matcher>) -> Vec<&String> {
+        self.get_matches_with_range(match_list)
+            .iter()
+            .map(|(_, string)| string)
     }
 }
 
