@@ -50,8 +50,8 @@ impl FromStr for Card {
             .ok_or(anyhow::anyhow!("failed to read line"))?;
 
         let id = card
-            .strip_prefix("Card ")
-            .map(|id| id.parse::<usize>())
+            .strip_prefix("Card")
+            .map(|id| id.trim().parse::<usize>())
             .ok_or(anyhow::anyhow!("failed to read id"))??;
 
         let (winning_nums, game_nums) = nums.split_once("|").unwrap_or(("", ""));
@@ -78,24 +78,57 @@ impl FromStr for Card {
     }
 }
 
+// fn insert_elements<T>(mut target_vec: Vec<T>, insert_index: usize, insert_vec: Vec<T>) -> Vec<T> {
+//     let after_insert_index = target_vec.split_off(insert_index);
+//
+//     target_vec.extend(insert_vec);
+//
+//     target_vec.extend(after_insert_index);
+//     return target_vec;
+// }
+
 fn main() -> Result<(), anyhow::Error> {
     let file = std::fs::read_to_string("input").expect("could not read file");
 
     let res: usize = file
         .lines()
         .filter_map(|line| {
-            println!("---------------------------------");
-            println!("{}", line);
             return line.parse::<Card>().ok();
         })
         .map(|card| {
-            println!("{:?}", card.get_winning_numbers());
             let points = card.get_points();
-            println!("{}", points);
             return points;
         })
         .sum();
 
     println!("part 1: {}", res);
+
+    let cards: Vec<Card> = file
+        .lines()
+        .filter_map(|line| {
+            return line.parse::<Card>().ok();
+        })
+        .collect();
+
+    let mut card_refs: Vec<&Card> = cards.iter().collect();
+
+    let mut i = 0;
+    let mut num_cards = card_refs.len();
+
+    while i < num_cards {
+        let winning_nums = card_refs[i].get_winning_numbers();
+
+        let new_cards: Vec<&Card> = (card_refs[i].id..card_refs[i].id + winning_nums.len())
+            .filter_map(|i| cards.get(i))
+            .collect();
+
+        card_refs.extend(new_cards);
+        num_cards = card_refs.len();
+
+        i += 1;
+    }
+
+    println!("part 2: {}", card_refs.len());
+
     return Ok(());
 }
