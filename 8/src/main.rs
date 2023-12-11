@@ -1,22 +1,5 @@
 use std::{collections::HashMap, error::Error};
 
-// struct Node<'a> {
-//     name: &'a str,
-//     left: &'a str,
-//     right: &'a str,
-// }
-//
-
-// fn print_type_of<T>(_: &T) {
-//     println!("{}", std::any::type_name::<T>())
-// }
-//
-
-// fn get_all_nodes_for_dir() -> Vec<(&&str, &(&str, &str))> {
-//
-//
-// }
-
 fn gcd(a: usize, b: usize) -> usize {
     if b == 0 {
         return a;
