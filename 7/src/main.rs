@@ -27,14 +27,13 @@ fn count_cards_w_wildcard(s: &str) -> HashMap<char, usize> {
         *counts.entry(ch).or_insert(0) += 1;
     }
 
-    println!("before: {:?}", counts);
-
     if let Some(wildcards) = counts.get(&'J') {
         if *wildcards == 5 {
             return counts;
         }
         let key_to_update = counts
             .iter()
+            .filter(|&(key, _val)| *key != 'J')
             .max_by(|a, b| {
                 return a.1.cmp(&b.1);
             })
@@ -54,7 +53,6 @@ fn count_cards_w_wildcard(s: &str) -> HashMap<char, usize> {
         counts.remove(&'J');
     }
 
-    println!("after: {:?}", counts);
     return counts;
 }
 
@@ -62,6 +60,7 @@ impl FromStr for HandType {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        //how to optionally change the count method???
         let counts = count_cards_w_wildcard(s);
 
         let hand_type = match counts.len() {
@@ -123,17 +122,7 @@ impl<'a> Ord for Hand<'a> {
     }
 }
 
-fn main() {
-    let card_strength = vec![
-        'A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2',
-    ];
-
-    let card_strength_wildcard = vec![
-        'A', 'K', 'Q', 'T', '9', '8', '7', '6', '5', '4', '3', '2', 'J',
-    ];
-
-    let file_data = std::fs::read_to_string("input").expect("could not read file");
-
+fn get_hands<'a>(file_data: &'a str, card_strengths: &Vec<char>) -> Vec<Hand<'a>> {
     let mut hands = file_data
         .lines()
         .map(|line| line.split_whitespace().collect::<Vec<_>>())
@@ -147,7 +136,7 @@ fn main() {
                 card_strengths: hand
                     .chars()
                     .into_iter()
-                    .filter_map(|c| card_strength.iter().position(|&rank| rank == c))
+                    .filter_map(|c| card_strengths.iter().position(|&rank| rank == c))
                     .collect(),
                 hand_type: hand.parse::<HandType>().expect("couldn't parse hand"),
                 bid: bid.parse::<usize>().unwrap(),
@@ -157,6 +146,21 @@ fn main() {
 
     hands.sort();
 
+    return hands;
+}
+
+fn main() {
+    let card_strength = vec![
+        'A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2',
+    ];
+
+    let card_strength_wildcard = vec![
+        'A', 'K', 'Q', 'T', '9', '8', '7', '6', '5', '4', '3', '2', 'J',
+    ];
+
+    let file_data = std::fs::read_to_string("input").expect("could not read file");
+
+    let hands = get_hands(&file_data, &card_strength);
     let total_winnings: usize = hands
         .iter()
         .rev()
@@ -165,42 +169,16 @@ fn main() {
         .sum();
     println!("part 1: {}", total_winnings);
 
-    let mut w_hands = file_data
-        .lines()
-        .map(|line| line.split_whitespace().collect::<Vec<_>>())
-        .filter_map(|slice| match slice.as_slice() {
-            [hand, bid] => return Some((*hand, *bid)),
-            _ => None,
-        })
-        .map(|(hand, bid)| {
-            return Hand {
-                string_val: hand,
-                card_strengths: hand
-                    .chars()
-                    .into_iter()
-                    .filter_map(|c| card_strength_wildcard.iter().position(|&rank| rank == c))
-                    .collect(),
-                hand_type: hand.parse::<HandType>().expect("couldn't parse hand"),
-                bid: bid.parse::<usize>().unwrap(),
-            };
-        })
-        .collect::<Vec<_>>();
-
-    w_hands.sort();
-
-    w_hands
-        .iter()
-        .for_each(|hand| println!("{}", hand.string_val));
+    let w_hands = get_hands(&file_data, &card_strength_wildcard);
 
     let total_winnings_w: usize = w_hands
         .iter()
         .rev()
         .enumerate()
-        .map(|(index, hand)| {
-            println!("{} : {}", hand.string_val, index + 1);
-            return (index, hand);
-        })
         .map(|(index, hand)| hand.bid * (index + 1))
         .sum();
     println!("part 2: {}", total_winnings_w);
 }
+
+#[test]
+fn wildcards() {}
